@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>CubeHash WASM File Hash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    label, input, select, button, pre, output, progress { display: block; margin: 0.5rem 0; }
+    pre { background: #f5f5f5; padding: 0.75rem; overflow: auto; }
+    .row { display: flex; align-items: center; gap: .5rem; }
+    .error { color: #a00; }
+  </style>
+</head>
+<body>
+  <h1>CubeHash (WASM) — File Hash</h1>
+
+  <input id="file" type="file" />
+
+  <div class="row">
+    <label for="revision">Revision:</label>
+    <select id="revision">
+      <option value="3" selected>3</option>
+      <option value="2">2</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label for="bits">Hash length (bits):</label>
+    <input id="bits" type="number" min="8" max="512" step="8" value="256">
+  </div>
+
+  <button id="hashBtn">Hash File</button>
+  <div id="err" class="error" role="alert"></div>
+
+  <h2>Digest (hex)</h2>
+  <pre id="out"></pre>
+
+  <div class="row">
+    <strong>Time:</strong> <output id="timeMs">–</output>
+  </div>
+  <div class="row">
+    <strong>Throughput:</strong> <output id="mbps">–</output>
+  </div>
+
+  <script type="module">
+    import init, { WasmCubeHash } from "https://ch.rimba-net.com/cubehash-wasm/0.1.0/cubehash_wasm.js";
+
+    const toHex = (bytes) => Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+    const bytesToMB = (n) => n / 1_000_000; // decimal MB
+
+    // Validate bits: multiple of 8, within [8, 512].
+    function validateBits(bits) {
+      if (!Number.isFinite(bits)) return { ok: false, msg: "Hash length must be a number." };
+      if (bits < 8 || bits > 512) return { ok: false, msg: "Hash length must be between 8 and 512 bits." };
+      if (bits % 8 !== 0) return { ok: false, msg: "Hash length must be a multiple of 8." };
+      return { ok: true, msg: "" };
+    }
+
+    // Optionally coerce an arbitrary number to the nearest valid multiple of 8 in range.
+    function coerceBits(bits) {
+      let b = Math.round(bits / 8) * 8;
+      if (b < 8) b = 8;
+      if (b > 512) b = 512;
+      return b;
+    }
+
+    async function hashFileStreamed(file, revision, hashLenBits) {
+      const hasher = new WasmCubeHash(revision, hashLenBits);
+      const reader = file.stream().getReader();
+
+      const t0 = performance.now();
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          hasher.update(value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      const digest = hasher.finalize();
+      const t1 = performance.now();
+
+      return { digest, elapsedMs: t1 - t0 };
+    }
+
+    async function main() {
+      await init();
+
+      const $ = (id) => document.getElementById(id);
+      const fileEl = $("file");
+      const outEl = $("out");
+      const timeEl = $("timeMs");
+      const mbpsEl = $("mbps");
+      const btn = $("hashBtn");
+      const revEl = $("revision");
+      const bitsEl = $("bits");
+      const errEl = $("err");
+
+      // Enforce valid multiples of 8 at UI level when the user leaves the field.
+      bitsEl.addEventListener("change", () => {
+        const raw = Number(bitsEl.value);
+        const coerced = coerceBits(raw);
+        bitsEl.value = String(coerced);
+      });
+
+      btn.addEventListener("click", async () => {
+        errEl.textContent = "";
+        outEl.textContent = "";
+        timeEl.value = "–";
+        mbpsEl.value = "–";
+
+        const f = fileEl.files?.[0];
+        if (!f) {
+          errEl.textContent = "Pick a file first.";
+          return;
+        }
+
+        const revision = Number(revEl.value);
+        const bits = Number(bitsEl.value);
+        const valid = validateBits(bits);
+        if (!valid.ok) {
+          errEl.textContent = valid.msg;
+          return;
+        }
+        if (revision !== 2 && revision !== 3) {
+          errEl.textContent = "Revision must be 2 or 3.";
+          return;
+        }
+
+        try {
+          const { digest, elapsedMs } = await hashFileStreamed(f, revision, bits);
+          outEl.textContent = toHex(digest);
+
+          timeEl.value = `${elapsedMs.toFixed(2)} ms`;
+          const mb = bytesToMB(f.size);
+          const seconds = elapsedMs / 1000;
+          const mbps = seconds > 0 ? (mb / seconds) : 0;
+          mbpsEl.value = `${mbps.toFixed(2)} MB/s`;
+        } catch (e) {
+          console.error(e);
+          errEl.textContent = `Error: ${e}`;
+        }
+      });
+    }
+
+    main();
+  </script>
+</body>
+</html>
