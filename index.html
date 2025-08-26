@@ -4,91 +4,82 @@
   <meta charset="utf-8" />
   <title>CubeHash WASM — Hash Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    pre {
-      min-width: 100%;
-      min-height: 4rem;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-  </style>
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans p-6">
-  <h1 class="text-2xl font-bold mb-4">CubeHash (WASM)</h1>
+<body>
+  <main class="container">
 
-  <!-- Floating Menu -->
-  <div class="fixed top-2 right-2 bg-white shadow-md rounded-lg p-3 flex gap-4 items-center z-50">
-    <label class="flex items-center gap-2">
-      <span class="text-sm">Revision</span>
-      <select id="revision" class="border rounded p-1 text-sm">
-        <option value="3" selected>3</option>
-        <option value="2">2</option>
+	<!-- Header -->
+  <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h1>CubeHash (WASM)</h1>
+    <div class="controls-row">
+      <label for="revision">Revision</label>
+      <select id="revision" class="compact-control">
+      <option value="3" selected>3</option>
+      <option value="2">2</option>
       </select>
-    </label>
-    <label class="flex items-center gap-2">
-      <span class="text-sm">Bits</span>
-      <input id="bits" type="number" min="8" max="512" step="8" value="256"
-        class="border rounded p-1 w-20 text-sm">
-    </label>
-  </div>
 
-  <!-- Tabs -->
-  <div class="flex gap-2 mb-4">
-    <button id="fileTab" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded">File</button>
-    <button id="stringTab" class="tab-btn bg-gray-200 text-gray-700 px-4 py-2 rounded">String</button>
-  </div>
+      <label for="bits">Bit length</label>
+      <input id="bits" type="number" min="8" max="512" step="8" value="256" class="compact-control" />
+      </div>
+  </header>
 
-  <!-- File Tab -->
-  <div id="fileTabContent" class="space-y-4">
-    <input id="file" type="file" class="block" />
-    <div id="fileInfo" class="text-sm text-gray-600"></div>
-    <button id="hashFileBtn" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Hash File</button>
+	<hr>
 
-    <div id="loader" class="hidden flex items-center gap-2 text-blue-600">
-      <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-      </svg>
-      <span>Hashing file...</span>
-    </div>
-    <progress id="progressBar" class="hidden w-full h-2 rounded bg-gray-200" value="0" max="100"></progress>
-  </div>
+	<!-- Tabs -->
+	<div class="tabs">
+		<button id="fileTab" class="secondary tab-active">File</button>
+		<button id="stringTab" class="secondary">String</button>
+	</div>
 
-  <!-- String Tab -->
-  <div id="stringTabContent" class="hidden space-y-4">
-    <textarea id="inputStr" rows="4" placeholder="Enter text here"
-      class="border rounded w-full p-2"></textarea>
-  </div>
+    <!-- File panel -->
+    <section id="fileTabContent" data-panel>
+      <input id="file" type="file" />
+      <div id="fileInfo"></div>
+      <button id="hashFileBtn">
+        <span class="btn-text">Hash File</span>
+        <div class="progress-fill"></div>
+      </button>
+    </section>
 
-  <!-- Error -->
-  <div id="err" class="text-red-600"></div>
+    <!-- String panel -->
+    <section id="stringTabContent" data-panel hidden>
+      <label>
+        <span>Input text</span>
+        <textarea id="inputStr" rows="4" placeholder="Enter text here"></textarea>
+      </label>
+    </section>
 
-  <!-- Digest -->
-  <h2 class="text-lg font-semibold mt-6">Digest (hex)</h2>
-  <div class="relative mt-2">
-    <pre id="out" class="bg-gray-100 p-3 rounded border overflow-auto"></pre>
-    <button id="copyBtn" title="Copy to clipboard"
-        class="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
-        📋
-    </button>
-    <span id="copyMsg" class="absolute top-2 right-10 text-green-600 text-sm hidden">Copied!</span>
-  </div>
+    <!-- Error -->
+    <div id="err" role="alert"></div>
 
-  <!-- Perf Info -->
-  <div id="perfInfo" class="flex gap-6 mt-4 text-sm text-gray-700">
-    <div><strong>Time:</strong> <output id="timeMs">–</output></div>
-    <div><strong>Throughput:</strong> <output id="mbps">–</output></div>
-  </div>
+    <!-- Digest -->
+    <h2 style="margin-top:.25rem">Digest (hex)</h2>
+    <section id="digestContent" data-panel>
+      <div class="digest-row">
+        <pre id="out"></pre>
+        <div class="copy-container">
+          <button id="copyBtn" title="Copy to clipboard" aria-label="Copy digest">📋</button>
+          <span id="copyMsg">Copied!</span>
+        </div>
+      </div>
 
-  <script type="module">
-    import init, { WasmCubeHash } from "https://cubehash-web.pages.dev/cubehash-wasm/0.1.0/cubehash_wasm.js";
-    init().then(() => {
-      // Make WasmCubeHash available globally
-      window.WasmCubeHash = WasmCubeHash;
-      main();
-    });
-  </script>
-  <script src="script.js"></script>
+      <!-- Perf Info (file mode only) -->
+      <div id="perfInfo">
+        <div><strong>Time:</strong> <output id="timeMs">–</output></div>
+        <div><strong>Throughput:</strong> <output id="mbps">–</output></div>
+      </div>
+    </section>
+  </main>
+<script type="module">
+	import init, { WasmCubeHash } from "https://cubehash-web.pages.dev/cubehash-wasm/0.1.0/cubehash_wasm.js";
+	init().then(() => {
+	  // Make WasmCubeHash available globally
+	  window.WasmCubeHash = WasmCubeHash;
+	  main();
+	});
+</script>
+<script src="script.js"></script>
 </body>
 </html>
