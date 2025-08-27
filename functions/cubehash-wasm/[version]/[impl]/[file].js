@@ -1,10 +1,10 @@
-// functions/cubehash-wasm/[version]/[file].js
+// functions/cubehash-wasm/[version]/[impl]/[file].js
 export async function onRequest(context) {
   const { env, params } = context;
-  const { version, file } = params;
+  const { version, impl, file } = params;
 
   // Build R2 key (bucket path)
-  const key = `cubehash-wasm/${version}/${file}`;
+  const key = `cubehash-wasm/${version}/${impl}/${file}`;
 
   // Try to fetch from R2
   const object = await env.ch_bucket.get(key);

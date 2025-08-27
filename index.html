@@ -22,7 +22,8 @@
 
       <label for="bits">Bit length</label>
       <input id="bits" type="number" min="8" max="512" step="8" value="256" class="compact-control" />
-      </div>
+      <div id="simdSupport" style="margin-left: 1rem;"></div>
+    </div>
   </header>
 
 	<hr>
@@ -72,13 +73,41 @@
       </div>
     </section>
   </main>
+<script src="https://unpkg.com/wasm-feature-detect/dist/umd/index.js"></script>
 <script type="module">
-	import init, { WasmCubeHash } from "https://cubehash-web.pages.dev/cubehash-wasm/0.1.0/cubehash_wasm.js";
-	init().then(() => {
-	  // Make WasmCubeHash available globally
-	  window.WasmCubeHash = WasmCubeHash;
-	  main();
-	});
+  async function loadWasm() {
+    try {
+      // Check for WASM and SIMD support
+      if (typeof WebAssembly === "object") {
+        const simdSupported = await wasmFeatureDetect.simd();
+        const simdSupportElement = document.getElementById("simdSupport");
+        if (simdSupported) {
+          simdSupportElement.textContent = "SIMD supported ✅";
+          simdSupportElement.style.color = "green";
+          const { default: init, WasmCubeHash } = await import(
+            "https://cubehash-web.pages.dev/cubehash-wasm/0.2.0/simd/cubehash_wasm.js"
+          );
+          await init();
+          window.WasmCubeHash = WasmCubeHash;
+        } else {
+          simdSupportElement.textContent = "SIMD not supported ❌";
+          simdSupportElement.style.color = "red";
+          const { default: init, WasmCubeHash } = await import(
+            "https://cubehash-web.pages.dev/cubehash-wasm/0.2.0/scalar/cubehash_wasm.js"
+          );
+          await init();
+          window.WasmCubeHash = WasmCubeHash;
+        }
+        if (typeof main === "function") main();
+      } else {
+        console.warn("WebAssembly not supported in this browser ❌");
+      }
+    } catch (err) {
+      console.error("Error loading WASM or detecting features:", err);
+    }
+  }
+
+  loadWasm();
 </script>
 <script src="script.js"></script>
 </body>
