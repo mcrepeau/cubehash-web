@@ -48,7 +48,6 @@ function main() {
   const timeEl = $("timeMs");
   const mbpsEl = $("mbps");
   const btnFile = $("hashFileBtn");
-  const errEl = $("err");
   const copyBtn = $("copyBtn");
   const copyMsg = $("copyMsg");
   const strEl = $("inputStr");
@@ -129,13 +128,12 @@ function main() {
   });
 
   btnFile.addEventListener("click", async () => {
-	errEl.textContent = "";
 	outEl.textContent = "";
 	timeEl.value = "–";
 	mbpsEl.value = "–";
 
 	const f = fileEl.files?.[0];
-	if (!f) { errEl.textContent = "Pick a file first."; return; }
+	if (!f) { outEl.textContent = "Pick a file first."; return; }
 
 	// Set up progress bar and disable button
 	btnFile.setAttribute("aria-busy", "true");
@@ -150,7 +148,7 @@ function main() {
 	  lastFileDigest = { digest, elapsedMs, fileSize: f.size };
 	  showDigest(digest, elapsedMs, f.size);
 	} catch (e) {
-	  errEl.textContent = `Error: ${e}`;
+	  outEl.textContent = `Error: ${e}`;
 	} finally {
 	  btnFile.removeAttribute("aria-busy");
 	  btnFile.disabled = false;
@@ -160,13 +158,12 @@ function main() {
   });
 
   async function updateStringHash() {
-	errEl.textContent = "";
 	try {
 	  const digest = await hashString(strEl.value, Number(revEl.value), Number(bitsEl.value));
 	  lastStringDigest = { digest, elapsedMs: 0 };
 	  showDigest(digest, 0);
 	} catch (e) {
-	  errEl.textContent = `Error: ${e}`;
+	  outEl.textContent = `Error: ${e}`;
 	}
   }
 

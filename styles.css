@@ -72,6 +72,7 @@ hr {
 .tabs {
   display: flex;
   margin-bottom: 0;
+  margin-top: 50px;
 }
 
 .tabs button {
@@ -95,6 +96,8 @@ hr {
   background-color: var(--primary-color);
   color: var(--text-light);
   border-color: var(--primary-color);
+  border-bottom: none;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
 /* Panels */
@@ -102,7 +105,7 @@ hr {
   margin-top: 0;
   padding: 1rem;
   border: 1px solid #ddd;
-  border-radius: var(--border-radius);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
   background-color: #fff;
 }
 

@@ -12,12 +12,12 @@
 
 	<!-- Header -->
   <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <h1>CubeHash (WASM)</h1>
-    <div class="controls-row">
+    <h1>CubeHash  <img src="cubehash.png" width="25" height="25"></h1>
+    <div class="controls-row" style="margin-top: 1rem;">
       <label for="revision">Revision</label>
       <select id="revision" class="compact-control">
-      <option value="3" selected>3</option>
-      <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="2">2</option>
       </select>
 
       <label for="bits">Bit length</label>
@@ -25,8 +25,6 @@
       <div id="simdSupport" style="margin-left: 1rem;"></div>
     </div>
   </header>
-
-	<hr>
 
 	<!-- Tabs -->
 	<div class="tabs">
@@ -52,11 +50,11 @@
       </label>
     </section>
 
-    <!-- Error -->
-    <div id="err" role="alert"></div>
+    <div class="tabs">
+		  <button class="secondary tab-active">Digest</button>
+	  </div>
 
     <!-- Digest -->
-    <h2 style="margin-top:.25rem">Digest (hex)</h2>
     <section id="digestContent" data-panel>
       <div class="digest-row">
         <pre id="out"></pre>
