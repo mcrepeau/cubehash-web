@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="loader">
+    <div class="loader-progress" id="loaderProgress"></div>
+  </div>
   <main class="container">
 
 	<!-- Header -->
@@ -80,33 +83,50 @@
 <script type="module">
   async function loadWasm() {
     try {
+      // Show loader
+      const loaderProgress = document.getElementById("loaderProgress");
+      loaderProgress.style.width = "20%"; // Initial progress
+
       // Check for WASM and SIMD support
       if (typeof WebAssembly === "object") {
+        loaderProgress.style.width = "40%"; // Update progress
+
         const simdSupported = await wasmFeatureDetect.simd();
         const simdSupportElement = document.getElementById("simdSupport");
+
         if (simdSupported) {
           simdSupportElement.textContent = "SIMD supported ✅";
           simdSupportElement.style.color = "green";
           const { default: init, WasmCubeHash } = await import(
             "https://cubehash-web.pages.dev/cubehash-wasm/0.2.0/simd/cubehash_wasm.js"
           );
+          loaderProgress.style.width = "60%"; // Update progress
           await init();
           window.WasmCubeHash = WasmCubeHash;
         } else {
           simdSupportElement.textContent = "SIMD not supported ❌";
           simdSupportElement.style.color = "red";
+          loaderProgress.style.width = "60%"; // Update progress
           const { default: init, WasmCubeHash } = await import(
             "https://cubehash-web.pages.dev/cubehash-wasm/0.2.0/scalar/cubehash_wasm.js"
           );
           await init();
           window.WasmCubeHash = WasmCubeHash;
         }
+
+        loaderProgress.style.width = "100%"; // Complete progress
+
         if (typeof main === "function") main();
       } else {
         console.warn("WebAssembly not supported in this browser ❌");
       }
     } catch (err) {
       console.error("Error loading WASM or detecting features:", err);
+    } finally {
+      // Hide loader after a short delay to show completion
+      setTimeout(() => {
+        document.querySelector(".loader").style.display = "none";
+      }, 500);
     }
   }
 
