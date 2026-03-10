@@ -98,7 +98,7 @@
           simdSupportElement.textContent = "SIMD supported ✅";
           simdSupportElement.style.color = "green";
           const { default: init, WasmCubeHash } = await import(
-            "https://cubehash-web.pages.dev/cubehash-wasm/0.2.0/simd/cubehash_wasm.js"
+            "https://cubehash-web.pages.dev/cubehash-wasm/0.2.1/simd/cubehash_wasm.js"
           );
           loaderProgress.style.width = "60%"; // Update progress
           await init();
@@ -108,7 +108,7 @@
           simdSupportElement.style.color = "red";
           loaderProgress.style.width = "60%"; // Update progress
           const { default: init, WasmCubeHash } = await import(
-            "https://cubehash-web.pages.dev/cubehash-wasm/0.2.0/scalar/cubehash_wasm.js"
+            "https://cubehash-web.pages.dev/cubehash-wasm/0.2.1/scalar/cubehash_wasm.js"
           );
           await init();
           window.WasmCubeHash = WasmCubeHash;
